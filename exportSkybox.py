@@ -34,8 +34,8 @@ bl_info = {
     "name": "Export Skybox",
     "description": "Export skybox-ready images of a scene",
     "author": "Alex Piola",
-    "version": (0, 2),
-    "blender": (2, 78, 0),
+    "version": (0, 3),
+    "blender": (2, 80, 0),
     "location": "File -> Export",
     "warning": "Might contain bugs, use at your own risk",
     "wiki_url": "",
@@ -45,18 +45,17 @@ bl_info = {
 def createCamera(camName):
     cam = bpy.data.cameras.new("cam")
     camObj = bpy.data.objects.new(camName,cam)
-    bpy.context.scene.objects.link(camObj)
+    bpy.context.scene.collection.objects.link(camObj)
     return camObj
 
 def deleteCamera(camNode):
-    bpy.ops.object.select_all(action='DESELECT')
-    camNode.select = True
+    bpy.ops.object.select_camera()
     bpy.ops.object.delete()
 
 def run(context, filepath, resolution, focusDist, clipStart, clipEnd):
     
     if bpy.context.mode != 'OBJECT':
-       bpy.ops.set_mode('OBJECT')
+       bpy.ops.object.mode_set(mode='OBJECT')
     
     front = createCamera("front")
     front.rotation_euler = [1.57079,0.0,0.0]
@@ -78,7 +77,7 @@ def run(context, filepath, resolution, focusDist, clipStart, clipEnd):
     for cam in cameras:
         print(cam.data.angle)
         cam.data.angle = 1.5708
-        cam.data.dof_distance = focusDist
+        cam.data.dof.focus_distance = focusDist
         cam.data.clip_end = clipEnd
         cam.data.clip_start = clipStart
     
@@ -96,15 +95,15 @@ def run(context, filepath, resolution, focusDist, clipStart, clipEnd):
     path = filepath.split(".")
 
     #Workaround for sky blend bug when looking up
-    world = bpy.data.worlds[0]
-    horizonColor = world.horizon_color
+    #world = bpy.data.worlds[0]
+    #horizonColor = world.horizon_color
     
     for cam in cameras:
        context.scene.camera = cam
-       if cam.name == "top":
-          world.horizon_color = world.zenith_color;
-       else:
-          world.horizon_color = horizonColor;
+       #if cam.name == "top":
+       #   world.horizon_color = world.zenith_color;
+       #else:
+       #   world.horizon_color = horizonColor;
        context.scene.render.filepath = path[0]+"_"+cam.name+"."+path[1]
        context.scene.render.use_compositing = True
        bpy.ops.render.render(write_still=True)
@@ -170,12 +169,12 @@ def menu_func_export(self, context):
 
 def register():
     bpy.utils.register_class(ExportSkybox)
-    bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
 def unregister():
     bpy.utils.unregister_class(ExportSkybox)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
 
 if __name__ == "__main__":
